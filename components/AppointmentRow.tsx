@@ -27,13 +27,18 @@ export default function AppointmentRow({ a, onChange }: { a: any; onChange: () =
     onChange();
   }
 
-  const canSend = a.status === "Confirmed" || a.status === "Rejected" || !!wa;
+  // A Completed appointment was necessarily Confirmed first, so the WhatsApp
+  // button stays usable after completion (it used to lock itself again because
+  // the in-memory message was lost when the list refreshed).
+  const canSend =
+    a.status === "Confirmed" || a.status === "Rejected" || a.status === "Completed" || !!wa;
 
   // FIX: the WhatsApp message/link used to exist only in the Confirm/Reject
   // response, so after a page reload the button looked enabled but did nothing
   // for appointments that were already Confirmed/Rejected. Rebuild it from the
   // appointment itself whenever one is decided, so the button always works.
-  const decided = a.status === "Confirmed" || a.status === "Rejected";
+  const decided =
+    a.status === "Confirmed" || a.status === "Rejected" || a.status === "Completed";
   const fallbackMessage = decided
     ? buildWhatsAppMessage({
         patientName: a.patientName,
@@ -46,7 +51,8 @@ export default function AppointmentRow({ a, onChange }: { a: any; onChange: () =
         reason: a.reason,
         breed: a.breed || "",
         fee: a.fee,
-        status: a.status as "Confirmed" | "Rejected",
+        // Completed implies it was Confirmed — send the confirmation wording.
+        status: (a.status === "Completed" ? "Confirmed" : a.status) as "Confirmed" | "Rejected",
       })
     : "";
   const waMessage = wa?.message || fallbackMessage;
